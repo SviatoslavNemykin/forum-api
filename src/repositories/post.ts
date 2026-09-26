@@ -1,4 +1,6 @@
-let posts = [
+import type { PostResponse } from '../transport/dto/post/responses.js';
+
+let posts: PostResponse[] = [
   {
     id: 1,
     title: "кнкннк 300",
@@ -22,30 +24,27 @@ let posts = [
   }
 ];
 
-export function getAll(category, take) {
-  let result = posts;
+export function getAll(category?: string, take?: number): PostResponse[] {
+  let result: PostResponse[] = posts;
 
   if (category) {
     result = result.filter(
-      (post) => post.category?.toLowerCase() === category.toLowerCase()
+      (post: PostResponse) => post.category.toLowerCase() === category.toLowerCase()
     );
   }
 
-  if (take !== undefined) {
-    const takeNumber = Number(take);
-    if (!isNaN(takeNumber) && takeNumber > 0) {
-      result = result.slice(0, takeNumber);
-    }
+  if (take !== undefined && take > 0) {
+    result = result.slice(0, take);
   }
 
   return result;
 }
 
-export function getById(id) {
-  return posts.find((post) => post.id === id);
+export function getById(id: number): PostResponse | undefined {
+  return posts.find((post: PostResponse) => post.id === id);
 }
 
-export async function addPost(newPost) {
+export async function addPost(newPost: PostResponse): Promise<PostResponse> {
   return new Promise((resolve) => {
     setTimeout(() => {
       posts = [...posts, newPost];
