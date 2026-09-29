@@ -1,95 +1,74 @@
-import type { Request, Response } from 'express';
-import * as postService from '../../services/post.js';
-import type { CreatePostRequest, GetPostsQuery } from '../dto/post/requests.js';
-import type { PostResponse } from '../dto/post/responses.js';
-import type { ErrorResponse } from '../dto/post/errors.js';
+import type { Request, Response } from "express";
+import type { PostService } from "../../services/post/post.types.js";
+import type { CreatePostRequest } from "../dto/post/requests.js";
+import type { PostResponse } from "../dto/post/responses.js";
+import type { ErrorResponse } from "../dto/post/errors.js";
 
-function isPositiveInteger(value: string): boolean {
-  if (typeof value !== 'string') {
-    return false;
-  }
-
-  const number = Number(value);
-
-  if (!Number.isSafeInteger(number)) {
-    return false;
-  }
-
-  if (number <= 0) {
-    return false;
-  }
-
-  return String(number) === value;
+export interface PostHandler {
+  getPosts(req: Request, res: Response<PostResponse[] | ErrorResponse>): void;
+  getPostById(req: Request, res: Response<PostResponse | ErrorResponse>): void;
+  createPost(
+    req: Request<{}, {}, CreatePostRequest>,
+    res: Response<PostResponse | ErrorResponse>
+  ): Promise<void>;
 }
 
-export function getAll(
-  req: Request<{}, {}, {}, GetPostsQuery>,
-  res: Response<PostResponse[] | ErrorResponse>
-): Response {
-  try {
-    const { category, take } = req.query;
+export function createPostHandlers(postService: PostService): PostHandler {
+  return {
+    getPosts(req, res) {
+      const take = req.query.take ? Number(req.query.take) : undefined;
+      res.status(200).json(postService.getPosts(take));
+    },
 
-    if (category !== undefined && (typeof category !== 'string' || !category.trim())) {
-      return res.status(400).json({ message: 'category must be a non-empty string' });
-    }
+    getPostById(req, res) {
+      const postId = Number(req.params.id);
+      if (!Number.isInteger(postId) || postId <= 0) {
+        res.status(400).json({ message: "Id must be a positive integer" });
+        return;
+      }
 
-    if (take !== undefined && !isPositiveInteger(take)) {
-      return res.status(400).json({ message: 'take must be a positive integer' });
-    }
+      const post = postService.getPostById(postId);
+      if (!post) {
+        res.status(404).json({ message: "Post not found" });
+        return;
+      }
 
-    const takeNumber = take !== undefined ? Number(take) : undefined;
-    const posts = postService.getAll(category, takeNumber);
+      res.status(200).json(post);
+    },
 
-    return res.status(200).json(posts);
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-}
+    async createPost(req, res) {
+      const body = req.body;
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        res.status(422).json({ message: "Invalid post data" });
+        return;
+      }
 
-export function getById(
-  req: Request<{ id: string }>,
-  res: Response<PostResponse | ErrorResponse>
-): Response {
-  try {
-    const { id } = req.params;
+      const { title, content, author } = body as Record<string, unknown>;
+      if (
+        typeof title !== "string" || !title.trim() ||
+        typeof content !== "string" || !content.trim() ||
+        typeof author !== "string" || !author.trim()
+      ) {
+        res.status(422).json({ message: "Invalid post data" });
+        return;
+      }
 
-    if (!isPositiveInteger(id)) {
-      return res.status(400).json({ message: 'id must be a positive integer' });
-    }
+      try {
+        const post = await postService.createPost({
+          title,
+          content,
+          author,
+        });
 
-    const post = postService.getById(Number(id));
+        if (!post) {
+          res.status(409).json({ message: "Post already exists" });
+          return;
+        }
 
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-
-    return res.status(200).json(post);
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-}
-
-export async function createPost(
-  req: Request<{}, {}, CreatePostRequest>,
-  res: Response<PostResponse | ErrorResponse>
-): Promise<Response> {
-  try {
-    const { title, content } = req.body;
-
-    if (
-      typeof title !== 'string' ||
-      !title.trim() ||
-      typeof content !== 'string' ||
-      !content.trim()
-    ) {
-      return res.status(422).json({
-        message: 'Title and content are required and must be non-empty strings'
-      });
-    }
-
-    const newPost = await postService.createPost(req.body);
-    return res.status(201).json(newPost);
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
-  }
+        res.status(201).json(post);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to create post" });
+      }
+    },
+  };
 }
