@@ -6,9 +6,8 @@ export interface CreatePostData {
   author: string;
 }
 
- 
 export interface PostService {
-  getPosts(take?: number): Post[];
-  getPostById(id: number): Post | undefined;
+  getPosts(take?: number): Promise<Post[]>;
+  getPostById(id: number): Promise<Post | undefined>;
   createPost(data: CreatePostData): Promise<Post | null>;
 }
