@@ -30,3 +30,10 @@ export function createApp() {
 
   return app;
 }
+
+const PORT = 8000;
+const app = createApp();
+
+app.listen(PORT, () => {
+  console.log(`Server started on http://localhost:${PORT}`);
+});
