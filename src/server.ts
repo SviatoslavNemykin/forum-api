@@ -1,19 +1,32 @@
 import express from "express";
+import { db } from "./prisma/db.js";
+
+import { createCategoryRepository } from "./repositories/category.js";
+import { createCategoryService } from "./services/category/category.js";
+import { createCategoryHandlers } from "./transport/handlers/category.js";
+import { createCategoryRouter } from "./transport/routers/category.js";
+
 import { createPostRepository } from "./repositories/post.js";
 import { createPostService } from "./services/post/post.js";
 import { createPostHandlers } from "./transport/handlers/post.js";
 import { createPostRouter } from "./transport/routers/post.js";
 
-const postRepository = createPostRepository();
-const postService = createPostService(postRepository);
-const postHandler = createPostHandlers(postService);
-const postRouter = createPostRouter(postHandler);
+export function createApp() {
+  const app = express();
+  app.use(express.json());
 
-const app = express();
+  const categoryRepo = createCategoryRepository(db);
+  const categorySvc = createCategoryService(categoryRepo);
+  const categoryHandlers = createCategoryHandlers(categorySvc);
+  const categoryRouter = createCategoryRouter(categoryHandlers);
 
-app.use(express.json());
-app.use("/posts", postRouter);
+  const postRepo = createPostRepository(db);
+  const postSvc = createPostService(postRepo);
+  const postHandlers = createPostHandlers(postSvc);
+  const postRouter = createPostRouter(postHandlers);
 
-app.listen(8000, () => {
-  console.log("Server started on http://localhost:8000");
-});
+  app.use("/categories", categoryRouter);
+  app.use("/posts", postRouter);
+
+  return app;
+}
