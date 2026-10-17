@@ -4,9 +4,8 @@ import type { Post } from "../../domain/post/entity.js";
 
 export function createPostService(postRepository: PostRepository): PostService {
   return {
-    // Делаем асинхронными, так как репозиторий теперь возвращает Promise
-    async getPosts(take) {
-      return await postRepository.getAll(take);
+    async getPosts(take, categoryName) {
+      return await postRepository.getAll(take, categoryName);
     },
     
     async getPostById(id) {
@@ -14,7 +13,6 @@ export function createPostService(postRepository: PostRepository): PostService {
     },
     
     async createPost(data: CreatePostData) {
-      // Обязательно ждем получение постов через await
       const posts = await postRepository.getAll();
       const title = data.title.trim();
 
@@ -25,15 +23,15 @@ export function createPostService(postRepository: PostRepository): PostService {
         return null;
       }
 
-      const newPost: Post = {
-        id: posts.length > 0 ? Math.max(...posts.map(p => p.id)) + 1 : 1,
+      const newPostData = {
         title,
         content: data.content.trim(),
         author: data.author.trim(),
         createdAt: new Date().toISOString(),
+        categoryId: data.categoryId,
       };
 
-      return await postRepository.addPost(newPost);
+      return await postRepository.addPost(newPostData as any);
     },
   };
 }
