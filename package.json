@@ -14,12 +14,13 @@
   "type": "module",
   "dependencies": {
     "@prisma/orm-postgres": "^8.0.0-rc.17",
-    "dotenv": "^18.0.7",
+    "argon2": "^0.45.1",
+    "dotenv": "^18.0.9",
     "express": "^5.2.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.5",
     "prisma": "^8.0.0-rc.22",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
