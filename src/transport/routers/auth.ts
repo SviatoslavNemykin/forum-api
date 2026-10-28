@@ -1,13 +1,8 @@
 import { Router } from "express";
-import { createAuthHandler } from "../handlers/auth";
-import type { AuthService } from "../../services/auth/auth.types";
 
-export function createAuthRouter(authService: AuthService) {
+export function createAuthRouter(userAuthHandler: any): Router {
   const router = Router();
-  const handler = createAuthHandler(authService);
-
-  router.post("/register", handler.register);
-  router.post("/login", handler.login);
-
+  router.post("/login", userAuthHandler.login);
+  router.post("/register", userAuthHandler.register);
   return router;
 }

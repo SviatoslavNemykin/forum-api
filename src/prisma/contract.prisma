@@ -4,10 +4,11 @@ model Post {
   id         Int      @id @default(autoincrement())
   title      String
   content    String
-  author     String
   createdAt  String
   categoryId Int
   category   Category @relation(fields: [categoryId], references: [id])
+  authorId   Int    // <-- поставь ?
+  author     User?    @relation(fields: [authorId], references: [id]) // <-- поставь ?
 }
 
 model Category {
@@ -16,9 +17,9 @@ model Category {
   posts Post[]
 }
 
-
 model User {
   id           Int    @id @default(autoincrement())
   email        String @unique
   passwordHash String
+  posts        Post[]
 }

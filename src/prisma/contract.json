@@ -70,10 +70,10 @@
           },
           "Post": {
             "fields": {
-              "author": {
+              "authorId": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/text@1",
+                  "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
@@ -114,6 +114,22 @@
               }
             },
             "relations": {
+              "author": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "authorId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
               "category": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -133,8 +149,8 @@
             },
             "storage": {
               "fields": {
-                "author": {
-                  "column": "author"
+                "authorId": {
+                  "column": "authorId"
                 },
                 "categoryId": {
                   "column": "categoryId"
@@ -180,7 +196,23 @@
                 }
               }
             },
-            "relations": {},
+            "relations": {
+              "posts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "authorId"
+                  ]
+                },
+                "to": {
+                  "model": "Post",
+                  "namespace": "public"
+                }
+              }
+            },
             "storage": {
               "fields": {
                 "email": {
@@ -240,9 +272,9 @@
             },
             "Post": {
               "columns": {
-                "author": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
+                "authorId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "nullable": false
                 },
                 "categoryId": {
@@ -294,9 +326,36 @@
                     "namespaceId": "public",
                     "tableName": "Category"
                   }
+                },
+                {
+                  "index": {
+                    "name": "Post_authorId_idx_e47547ed"
+                  },
+                  "source": {
+                    "columns": [
+                      "authorId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Post"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
                 }
               ],
               "indexes": [
+                {
+                  "columns": [
+                    "authorId"
+                  ],
+                  "name": "Post_authorId_idx_e47547ed",
+                  "prefix": "Post_authorId_idx",
+                  "unique": false
+                },
                 {
                   "columns": [
                     "categoryId"
@@ -356,7 +415,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "eb8e66f4052c533a89be1b7b82f1ed2fbd0e4f000b43c4397c01e541f9f2d339"
+    "storageHash": "a37fe4a4a65337a092424eaed556e150be880c5d0781d4d18e9e26423114fcaf"
   },
   "capabilities": {
     "postgres": {

@@ -26,12 +26,12 @@ export function createPostService(postRepository: PostRepository): PostService {
       const newPostData = {
         title,
         content: data.content.trim(),
-        author: data.author.trim(),
         createdAt: new Date().toISOString(),
         categoryId: data.categoryId,
+        authorId: data.authorId,
       };
 
-      return await postRepository.addPost(newPostData as any);
+      return await postRepository.addPost(newPostData);
     },
   };
 }

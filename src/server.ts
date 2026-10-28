@@ -11,11 +11,12 @@ import { createPostService } from "./services/post/post.js";
 import { createPostHandlers } from "./transport/handlers/post.js";
 import { createPostRouter } from "./transport/routers/post.js";
 
-
 import { createUserRepository } from "./repositories/user.js";
 import { createAuthService } from "./services/auth/auth.js";
+import { createAuthHandler } from "./transport/handlers/auth.js";
 import { createAuthRouter } from "./transport/routers/auth.js";
 import { hashPassword, verifyPassword } from "./lib/password.js";
+import { signAccessToken } from "./lib/token.js";
 
 export function createApp() {
   const app = express();
@@ -31,13 +32,14 @@ export function createApp() {
   const postHandlers = createPostHandlers(postSvc);
   const postRouter = createPostRouter(postHandlers);
 
-
   const userRepo = createUserRepository(db);
-  const authSvc = createAuthService(userRepo, {
-    hash: hashPassword,
-    verify: verifyPassword,
-  });
-  const authRouter = createAuthRouter(authSvc);
+  const authSvc = createAuthService(
+    userRepo,
+    { hash: hashPassword, verify: verifyPassword },
+    { signAccessToken }
+  );
+  const authHandler = createAuthHandler(authSvc);
+  const authRouter = createAuthRouter(authHandler);
 
   app.use("/categories", categoryRouter);
   app.use("/posts", postRouter);
