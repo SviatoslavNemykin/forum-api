@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { AuthService } from "../../services/auth/auth.types";
+import type { AuthService } from "../../services/auth/auth.types.js";
 
 export function createAuthHandler(authService: AuthService) {
   return {
@@ -28,8 +28,14 @@ export function createAuthHandler(authService: AuthService) {
           return res.status(400).json({ error: "EMAIL_AND_PASSWORD_REQUIRED" });
         }
 
-        const result = await authService.login({ email, password });
-        return res.status(200).json(result);
+        const { tokens, user } = await authService.login({ email, password });
+        res.cookie("accessToken", tokens.access, {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          maxAge: 15 * 60 * 100,
+        });
+        return res.status(200).json(user);
       } catch (error: any) {
         if (error.message === "INVALID_CREDENTIALS") {
           return res.status(401).json({ error: "Invalid email or password" });

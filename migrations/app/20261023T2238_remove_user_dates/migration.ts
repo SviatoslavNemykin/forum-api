@@ -9,7 +9,7 @@ export default class M extends Migration<Start, End> {
   override readonly startContractJson = startContract;
   override readonly endContractJson = endContract;
 
-  override get operations() {
+  override get operations(): any {
     return [
       this.dropColumn({ schema: 'public', table: 'User', column: 'createdAt' }),
       this.dropColumn({ schema: 'public', table: 'User', column: 'updatedAt' }),

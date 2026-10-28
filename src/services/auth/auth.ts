@@ -1,9 +1,10 @@
-import type { UserRepository } from "../../domain/user/repository";
-import type { AuthService, PasswordHasher, AuthInput } from "./auth.types";
+import type { UserRepository } from "../../domain/user/repository.js";
+import type { AuthService, PasswordHasher, TokenService, AuthInput } from "./auth.types.js";
 
 export function createAuthService(
   repository: UserRepository,
-  passwordHasher: PasswordHasher
+  passwordHasher: PasswordHasher,
+  tokenService: TokenService
 ): AuthService {
   return {
     async register(input: AuthInput) {
@@ -22,6 +23,9 @@ export function createAuthService(
       
       return {
         user: { id: user.id, email: user.email },
+        tokens: {
+          access: tokenService.signAccessToken(user.id),
+        },
       };
     },
   };

@@ -1,4 +1,4 @@
-import type { PublicUser } from "../../domain/user/entity";
+import type { PublicUser } from "../../domain/user/entity.js";
 
 export interface AuthInput {
   email: string;
@@ -10,7 +10,16 @@ export interface PasswordHasher {
   verify(hash: string, password: string): Promise<boolean>;
 }
 
+export interface TokenService {
+  signAccessToken(userId: number): string;
+}
+
 export interface AuthService {
   register(input: AuthInput): Promise<PublicUser>;
-  login(input: AuthInput): Promise<{ user: PublicUser }>;
+  login(input: AuthInput): Promise<{
+    user: PublicUser;
+    tokens: {
+      access: string;
+    };
+  }>;
 }

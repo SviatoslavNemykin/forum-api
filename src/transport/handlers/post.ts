@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
 import type { PostService } from "../../services/post/post.types.js";
-import type { Post } from "../../domain/post/entity.js";
 
 export interface PostHandler {
   getPosts(req: Request, res: Response): Promise<void>;
@@ -9,7 +8,6 @@ export interface PostHandler {
 }
 
 export function createPostHandlers(postService: PostService): PostHandler {
-  // ... ваш реалізований об'єкт
   return {
     async getPosts(req, res) {
       const take = req.query.take ? Number(req.query.take) : undefined;
@@ -36,14 +34,14 @@ export function createPostHandlers(postService: PostService): PostHandler {
         res.status(422).json({ message: "Invalid post data" });
         return;
       }
-      const { title, content, author, categoryId } = body as Record<string, unknown>;
+      const { title, content, categoryId, authorId } = body as Record<string, unknown>;
       if (
         typeof title !== "string" || !title.trim() ||
         typeof content !== "string" || !content.trim() ||
-        typeof author !== "string" || !author.trim() ||
-        typeof categoryId !== "number" || !Number.isInteger(categoryId) || categoryId <= 0
+        typeof categoryId !== "number" || !Number.isInteger(categoryId) || categoryId <= 0 ||
+        typeof authorId !== "number" || !Number.isInteger(authorId) || authorId <= 0
       ) {
-        res.status(422).json({ message: "Invalid post data or categoryId" });
+        res.status(422).json({ message: "Invalid post data, categoryId or authorId" });
         return;
       }
 
@@ -51,8 +49,8 @@ export function createPostHandlers(postService: PostService): PostHandler {
         const post = await postService.createPost({
           title,
           content,
-          author,
           categoryId,
+          authorId,
         });
 
         if (!post) {
@@ -62,8 +60,8 @@ export function createPostHandlers(postService: PostService): PostHandler {
 
         res.status(201).json(post);
       } catch (error: any) {
-        if (error.message === "CATEGORY_NOT_FOUND") {
-          res.status(404).json({ message: "Category not found" });
+        if (error.message === "CATEGORY_OR_USER_NOT_FOUND") {
+          res.status(404).json({ message: "Category or User not found" });
           return;
         }
         res.status(500).json({ message: "Failed to create post" });

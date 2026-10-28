@@ -3,12 +3,12 @@ import type { Post } from "../../domain/post/entity.js";
 export interface CreatePostData {
   title: string;
   content: string;
-  author: string;
-  categoryId: number; // Додано
+  categoryId: number;
+  authorId: number;
 }
 
 export interface PostService {
-  getPosts(take?: number, categoryName?: string): Promise<Post[]>; // Додано categoryName
+  getPosts(take?: number, categoryName?: string): Promise<Post[]>;
   getPostById(id: number): Promise<Post | undefined>;
   createPost(data: CreatePostData): Promise<Post | null>;
 }
