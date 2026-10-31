@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import { db } from "./prisma/db.js";
 
 import { createCategoryRepository } from "./repositories/category.js";
@@ -13,14 +14,15 @@ import { createPostRouter } from "./transport/routers/post.js";
 
 import { createUserRepository } from "./repositories/user.js";
 import { createAuthService } from "./services/auth/auth.js";
-import { createAuthHandler } from "./transport/handlers/auth.js";
+import { createAuthHandlers } from "./transport/handlers/auth.js";
 import { createAuthRouter } from "./transport/routers/auth.js";
 import { hashPassword, verifyPassword } from "./lib/password.js";
-import { signAccessToken } from "./lib/token.js";
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from "./lib/jwt.js";
 
 export function createApp() {
   const app = express();
   app.use(express.json());
+  app.use(cookieParser()); // <-- Обязательно для чтения кук
 
   const categoryRepo = createCategoryRepository(db);
   const categorySvc = createCategoryService(categoryRepo);
@@ -36,10 +38,10 @@ export function createApp() {
   const authSvc = createAuthService(
     userRepo,
     { hash: hashPassword, verify: verifyPassword },
-    { signAccessToken }
+    { signAccessToken, signRefreshToken, verifyRefreshToken }
   );
-  const authHandler = createAuthHandler(authSvc);
-  const authRouter = createAuthRouter(authHandler);
+  const authHandlers = createAuthHandlers(authSvc);
+  const authRouter = createAuthRouter(authHandlers);
 
   app.use("/categories", categoryRouter);
   app.use("/posts", postRouter);

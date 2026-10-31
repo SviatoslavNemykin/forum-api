@@ -12,6 +12,8 @@ export interface PasswordHasher {
 
 export interface TokenService {
   signAccessToken(userId: number): string;
+  signRefreshToken(userId: number): string;
+  verifyRefreshToken(token: string): number;
 }
 
 export interface AuthService {
@@ -20,6 +22,11 @@ export interface AuthService {
     user: PublicUser;
     tokens: {
       access: string;
+      refresh: string;
     };
+  }>;
+  refresh(refreshToken: string): Promise<{
+    access: string;
+    refresh: string;
   }>;
 }
