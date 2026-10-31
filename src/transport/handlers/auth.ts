@@ -1,47 +1,109 @@
 import type { Request, Response } from "express";
 import type { AuthService } from "../../services/auth/auth.types.js";
 
-export function createAuthHandler(authService: AuthService) {
+export interface AuthCredentialsRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthHandlers {
+  register(
+    req: Request<{}, {}, AuthCredentialsRequest>,
+    res: Response
+  ): Promise<void>;
+  login(
+    req: Request<{}, {}, AuthCredentialsRequest>,
+    res: Response
+  ): Promise<void>;
+  refresh(req: Request, res: Response): Promise<void>;
+}
+
+export function createAuthHandlers(service: AuthService): AuthHandlers {
   return {
-    async register(req: Request, res: Response) {
+    async register(req, res) {
       try {
         const { email, password } = req.body;
-        if (!email || !password) {
-          return res.status(400).json({ error: "EMAIL_AND_PASSWORD_REQUIRED" });
+        const user = await service.register({ email, password });
+        res.status(201).json(user);
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message === "EMAIL_ALREADY_EXISTS"
+        ) {
+          res.status(409).json({ message: "Email already exists" });
+          return;
         }
-
-        const user = await authService.register({ email, password });
-        return res.status(201).json(user);
-      } catch (error: any) {
-        if (error.message === "EMAIL_ALREADY_EXISTS") {
-          return res.status(409).json({ error: "Email already exists" });
-        }
-        console.error("Registration error:", error);
-        return res.status(500).json({ error: "Internal server error" });
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
       }
     },
 
-    async login(req: Request, res: Response) {
+    async login(req, res) {
       try {
         const { email, password } = req.body;
-        if (!email || !password) {
-          return res.status(400).json({ error: "EMAIL_AND_PASSWORD_REQUIRED" });
-        }
+        const result = await service.login({ email, password });
 
-        const { tokens, user } = await authService.login({ email, password });
+        res.cookie("accessToken", result.tokens.access, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: Number(process.env.TOKEN_ACCESS_TIME),
+          path: "/",
+        });
+
+        res.cookie("refreshToken", result.tokens.refresh, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: Number(process.env.TOKEN_REFRESH_TIME),
+          path: "/auth",
+        });
+
+        res.status(200).json({ user: result.user });
+      } catch (error) {
+        if (error instanceof Error && error.message === "INVALID_CREDENTIALS") {
+          res.status(401).json({ message: "Invalid credentials" });
+          return;
+        }
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    },
+
+    async refresh(req, res) {
+      const refreshToken = req.cookies.refreshToken;
+      if (typeof refreshToken !== "string") {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
+
+      try {
+        const tokens = await service.refresh(refreshToken);
+
         res.cookie("accessToken", tokens.access, {
           httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
+          maxAge: Number(process.env.TOKEN_ACCESS_TIME),
           path: "/",
-          maxAge: 15 * 60 * 100,
         });
-        return res.status(200).json(user);
-      } catch (error: any) {
-        if (error.message === "INVALID_CREDENTIALS") {
-          return res.status(401).json({ error: "Invalid email or password" });
+
+        res.cookie("refreshToken", tokens.refresh, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: Number(process.env.TOKEN_REFRESH_TIME),
+          path: "/auth",
+        });
+
+        res.status(200).json({ message: "success" });
+      } catch (error) {
+        if (error instanceof Error && error.message === "INVALID REFRESH TOKEN") {
+          res.status(401).json({ message: "Unauthorized" });
+          return;
         }
-        console.error("Login error:", error);
-        return res.status(500).json({ error: "Internal server error" });
+        console.error(error);
+        res.status(500).json({ message: "server error" });
       }
     },
   };

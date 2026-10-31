@@ -10,6 +10,11 @@ export function createUserRepository(database: PostgresClient<Contract>): UserRe
       return (user as unknown as User) ?? null;
     },
 
+    async getUserById(id: number): Promise<User | null> {
+      const user = await database.orm.public.User.where({ id }).first();
+      return (user as unknown as User) ?? null;
+    },
+
     async createUser(data: NewUser): Promise<User> {
       try {
         const created = await database.orm.public.User.create(data);
