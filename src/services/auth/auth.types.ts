@@ -29,4 +29,5 @@ export interface AuthService {
     access: string;
     refresh: string;
   }>;
+  me(userId: number): Promise<PublicUser>;
 }

@@ -4,6 +4,7 @@ import type { PostService } from "../../services/post/post.types.js";
 export interface PostHandler {
   getPosts(req: Request, res: Response): Promise<void>;
   getPostById(req: Request, res: Response): Promise<void>;
+  getMyPosts(req: Request, res: Response): Promise<void>;
   createPost(req: Request, res: Response): Promise<void>;
 }
 
@@ -27,6 +28,16 @@ export function createPostHandlers(postService: PostService): PostHandler {
         return;
       }
       res.status(200).json(post);
+    },
+    async getMyPosts(req: Request, res: Response): Promise<void> {
+      try {
+          const userId: number = res.locals.userId;
+          const posts = await postService.getMyPosts(userId);
+          res.status(200).json(posts);
+      } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: "Internal server error" });
+      }
     },
     async createPost(req, res) {
       const body = req.body;

@@ -16,13 +16,16 @@ import { createUserRepository } from "./repositories/user.js";
 import { createAuthService } from "./services/auth/auth.js";
 import { createAuthHandlers } from "./transport/handlers/auth.js";
 import { createAuthRouter } from "./transport/routers/auth.js";
+import { createRequireAuth } from "./middlewares/requireAuth.js";
 import { hashPassword, verifyPassword } from "./lib/password.js";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "./lib/jwt.js";
+import { signAccessToken, signRefreshToken, verifyRefreshToken, verifyAccessToken } from "./lib/jwt.js";
 
 export function createApp() {
   const app = express();
   app.use(express.json());
   app.use(cookieParser()); // <-- Обязательно для чтения кук
+
+  const requireAuth = createRequireAuth(verifyAccessToken);
 
   const categoryRepo = createCategoryRepository(db);
   const categorySvc = createCategoryService(categoryRepo);
@@ -32,7 +35,7 @@ export function createApp() {
   const postRepo = createPostRepository(db);
   const postSvc = createPostService(postRepo);
   const postHandlers = createPostHandlers(postSvc);
-  const postRouter = createPostRouter(postHandlers);
+  const postRouter = createPostRouter(postHandlers, requireAuth);
 
   const userRepo = createUserRepository(db);
   const authSvc = createAuthService(
@@ -41,7 +44,7 @@ export function createApp() {
     { signAccessToken, signRefreshToken, verifyRefreshToken }
   );
   const authHandlers = createAuthHandlers(authSvc);
-  const authRouter = createAuthRouter(authHandlers);
+  const authRouter = createAuthRouter(authHandlers, requireAuth);
 
   app.use("/categories", categoryRouter);
   app.use("/posts", postRouter);

@@ -26,7 +26,14 @@ export function createPostRepository(database: PostgresClient<Contract>): PostRe
       const post = await database.orm.public.Post.where({ id }).include("category").include("author").first();
       return post as unknown as Post | undefined;
     },
-
+    async getByAuthorId(authorId: number): Promise<Post[]> {
+            const posts = await database.orm.public.Post.where({ authorId })
+                .include("category")
+                .include("author")
+                .all();
+            return posts;
+        },
+    
     async addPost(newPost: {
       title: string;
       content: string;

@@ -1,3 +1,4 @@
+import type { PublicUser } from "../../domain/user/entity.js";
 import type { UserRepository } from "../../domain/user/repository.js";
 import type { AuthService, AuthInput, PasswordHasher, TokenService } from "./auth.types.js";
 
@@ -31,6 +32,15 @@ export function createAuthService(
         },
       };
     },
+
+    async me(userId: number): Promise<PublicUser> {
+            const user = await repository.getUserById(userId);
+            if (!user) {
+                throw new Error("USER_NOT_FOUND");
+            }
+            const { passwordHash, ...publicUser } = user;
+            return publicUser;
+        },
 
     async refresh(refreshToken: string) {
       let userId: number;

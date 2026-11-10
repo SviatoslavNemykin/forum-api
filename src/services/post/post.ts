@@ -11,7 +11,11 @@ export function createPostService(postRepository: PostRepository): PostService {
     async getPostById(id) {
       return await postRepository.getById(id);
     },
-    
+
+    async getMyPosts(authorId: number): Promise<Post[]> {
+      return await postRepository.getByAuthorId(authorId);
+    },
+
     async createPost(data: CreatePostData) {
       const posts = await postRepository.getAll();
       const title = data.title.trim();
