@@ -11,7 +11,7 @@ export function signAccessToken(userId: number): string {
   return jwt.sign({}, accessSecret, {
     algorithm: "HS256",
     subject: String(userId),
-    expiresIn: Number(process.env.TOKEN_ACCESS_TIME) || 900,
+    expiresIn: Number(process.env.TOKEN_ACCESS_TIME) ,
   });
 }
 
@@ -19,7 +19,7 @@ export function signRefreshToken(userId: number): string {
   return jwt.sign({ type: "refresh" }, refreshSecret, {
     algorithm: "HS256",
     subject: String(userId),
-    expiresIn: Number(process.env.TOKEN_REFRESH_TIME) || 604800,
+    expiresIn: Number(process.env.TOKEN_REFRESH_TIME),
   });
 }
 
@@ -37,6 +37,24 @@ export function verifyRefreshToken(token: string): number {
     if (!Number.isSafeInteger(userId) || userId <= 0) {
       throw new Error();
     }
+    return userId;
+  } catch {
+    throw new Error("Invalid token");
+  }
+}
+
+export function verifyAccessToken(token: string): number {
+  try {
+    const payload = jwt.verify(token, accessSecret, { algorithms: ["HS256"] });
+    if (typeof payload === "string" || typeof payload.sub !== "string") {
+        throw new Error();
+    }
+
+    const userId = Number(payload.sub);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+        throw new Error();
+    }
+
     return userId;
   } catch {
     throw new Error("Invalid token");

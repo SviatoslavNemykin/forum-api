@@ -1,9 +1,17 @@
 import { Router } from "express";
+import type { RequestHandler } from "express";
+import type { AuthHandlers } from "../handlers/auth.js";
 
-export function createAuthRouter(userAuthHandler: any): Router {
-  const router = Router();
-  router.post("/login", userAuthHandler.login);
-  router.post("/register", userAuthHandler.register);
-  router.post("/refresh", userAuthHandler.refresh);
-  return router;
+export function createAuthRouter(
+    handlers: AuthHandlers,
+    requireAuth: RequestHandler 
+): Router {
+    const router = Router();
+
+    router.post("/register", handlers.register);
+    router.post("/login", handlers.login);
+    router.post("/refresh", handlers.refresh);
+    router.get("/me", requireAuth, handlers.me); 
+
+    return router;
 }

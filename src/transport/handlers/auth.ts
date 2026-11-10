@@ -16,6 +16,7 @@ export interface AuthHandlers {
     res: Response
   ): Promise<void>;
   refresh(req: Request, res: Response): Promise<void>;
+  me(req: Request, res: Response): Promise<void>;
 }
 
 export function createAuthHandlers(service: AuthService): AuthHandlers {
@@ -106,5 +107,18 @@ export function createAuthHandlers(service: AuthService): AuthHandlers {
         res.status(500).json({ message: "server error" });
       }
     },
+    async me(req: Request, res: Response): Promise<void> {
+        try {
+          const userId: number = res.locals.userId;
+          const user = await service.me(userId);
+          res.status(200).json(user);
+        } catch (error) {
+          if (error instanceof Error && error.message === "USER_NOT_FOUND") {
+              res.status(404).json({ message: "User not found" });
+              return;
+          }
+          res.status(401).json({ message: "Unauthorized" });
+        }
+  },
   };
 }
